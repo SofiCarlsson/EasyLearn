@@ -8,6 +8,11 @@ namespace EasyLearn.Data.Models
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public DateTime? DateOfBirth { get; set; }
+
+        // Navigering (bra för statistik etc)
+        public ICollection<RadicalTrainingProgress> TrainingProgress { get; set; } = new List<RadicalTrainingProgress>();
+        public ICollection<QuizSession> QuizSessions { get; set; } = new List<QuizSession>();
+
     }
 
 }
