@@ -1,0 +1,17 @@
+﻿@* Components/Icons/ChinesePavilion.razor *@
+<MudIcon Size="@Size" Class="@Class" @attributes="AdditionalAttributes">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="1em" height="1em"
+         viewBox="0 0 48 48"
+         fill="currentColor"
+         style="vertical-align: middle;">
+        <path d="M15 12h18c0.9 0.8 3.4 3 6 4 1.9 0.7 5 1 5 1s-1.8 0.6-3 1c-1.5 0.5-4 1-4 1H11c-1.6-0.5-4-1-4-1s3.1-0.3 5-1c2.6-1 5.1-3.2 6-4zM18 12l6-8 6 8H18zM11 19v19h2V19h-2zm26 0v19h2V19h-2zM6 38h36v6H6v-6z" />
+    </svg>
+</MudIcon>
+
+@code {
+    [Parameter] public Size Size { get; set; } = Size.Small;
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}

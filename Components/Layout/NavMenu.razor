@@ -1,0 +1,105 @@
+﻿@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">EasyLearn</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+
+        @* När man inte är inloggad ser man dessa *@
+        <div class="nav-item px-3">
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+                Hem
+            </MudNavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <MudNavLink Href="About" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Info">
+                Om EasyLearn
+            </MudNavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <MudNavLink Href="FlashCard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AutoAwesomeMotion">
+                FlashCard
+            </MudNavLink>
+        </div>
+
+
+        @* När man är inloggad ser man dessa också *@
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <MudNavLink Href="Account/Manage">
+                        <MudIcon Icon="@Icons.Material.Filled.ManageAccounts" Class="me-1" />
+                        Inställningar
+                    </MudNavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <MudNavLink Href="FlashCard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AutoAwesomeMotion">
+                        FlashCard
+                    </MudNavLink>
+                </div>
+
+                <MudNavLink Href="MyPage">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-1" />
+					Min Sida
+                </MudNavLink>
+
+                <div class="nav-item px-3">
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <button type="submit" class="nav-link">
+                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                        </button>
+                    </form>
+                </div>
+            </Authorized>
+
+            @* Om man inte är inloggad ser man dessa också *@
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <MudNavLink Href="Account/Register" Icon="@Icons.Material.Filled.Person" Match="NavLinkMatch.All">
+                        Registrera    
+                    </MudNavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <MudNavLink Href="Account/Login" Icon="@Icons.Material.Filled.Login" Match="NavLinkMatch.All">
+                        Logga in    
+                    </MudNavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+
