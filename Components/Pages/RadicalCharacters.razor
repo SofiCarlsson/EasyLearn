@@ -1,0 +1,51 @@
+﻿@page "/RadicalCharacters/{RadicalId:int}"
+@using EasyLearn.Data
+@using EasyLearn.Data.Models
+@using Microsoft.EntityFrameworkCore
+@inject NavigationManager Navigation
+@inject ApplicationDbContext Db
+
+<h3>Tecken med radikal: @radical?.RadicalCharacter som betyder @radical?.Meaning</h3>
+
+@if (radical == null)
+{
+	<p>Laddar...</p>
+}
+else
+{
+	<MudGrid>
+		@foreach (var character in characters)
+		{
+			<MudItem xs="6" sm="4" md="3">
+				<MudPaper Class="pa-4 text-center">
+					<h2>@character.ChineseCharacter</h2>
+					<p>@character.Pinyin</p>
+					<p>@character.Meaning</p>
+
+				</MudPaper>
+			</MudItem>
+		}
+	</MudGrid>
+}
+@code {
+	// Parameter för att ta emot radikalens id från URL:en
+	[Parameter] 
+	public int RadicalId { get; set; }
+
+	// Variabel för att lagra den valda radikalen
+	private Radical radical;
+
+	// En lista för att lagra tecken som har den valda radikalen
+	private List<Character> characters;
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Hämta ut radikalen med det valda id:et
+		radical = await Db.Radicals.FirstOrDefaultAsync(r => r.Id == RadicalId);
+		// Hämta alla tecken som har den valda radikalen
+		characters = await Db.Characters
+					.Where(c => c.RadicalId == RadicalId)
+					.ToListAsync();
+	}
+
+}

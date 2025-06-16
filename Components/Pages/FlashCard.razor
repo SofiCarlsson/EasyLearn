@@ -1,6 +1,60 @@
 ﻿@page "/FlashCard"
-<h3>FlashCard</h3>
+@inject NavigationManager Navigation
+
+
+<MudGrid>
+		<MudItem xs="12">
+		<MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+			<MudText Typo="Typo.h2">Ubildningar</MudText>
+		</MudPaper>
+			
+		</MudItem>
+
+	<MudItem xs="12">
+		<MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+			<MudText Typo="Typo.body1">
+				Det finns två val att göra. Välj att träna på Radiklaler genom att trycka på vänstra knappen, eller välja att testa dig själv genom att trycka på den högra knappen.
+			</MudText>
+		</MudPaper>
+	</MudItem>
+
+	
+	<MudItem xs="6">
+			<MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+				<MudButton Href="/RadicalPractice"
+						   Variant="Variant.Filled"
+						   Size="Size.Large"
+						   Class="orange-button">
+					Träna Radikaler
+				</MudButton>
+		</MudPaper>
+	</MudItem>
+
+	<MudItem xs="6">
+		<MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+			<MudButton Href="/TestRadicals"
+					   Variant="Variant.Filled"
+					   Size="Size.Large"
+					   Class="orange-button">
+				Testa Radikaler
+			</MudButton>
+		</MudPaper>
+	</MudItem>
+</MudGrid>
+
 
 @code {
-
+	private void OnClickNavigate()
+	{
+		Console.WriteLine("Klick registrerat!");
+		Navigation.NavigateTo("/RadicalPractice");
+	}
 }
+
+
+<style>
+	.orange-button {
+		background-color: #FF8F00;
+		color: white;
+	}
+</style>

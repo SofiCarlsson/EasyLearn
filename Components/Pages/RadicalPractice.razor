@@ -1,0 +1,39 @@
+﻿@page "/RadicalPractice"
+@using EasyLearn.Data
+@using EasyLearn.Data.Models
+@using Microsoft.EntityFrameworkCore
+@inject NavigationManager Navigation
+@inject ApplicationDbContext Db
+
+
+@* // Här vill jag få upp alla radikaler som knappar man kan trycka på för att träna på och då kommer man få upp alla tecken som innehåller den radikalen.
+ *@
+ <h3>Välj en radikal att träna på</h3>
+
+@if (radicals == null)
+{
+	<p>Laddar...</p>
+}
+else
+{
+    <MudGrid>
+        @foreach (var radical in radicals)
+        {
+            <MudItem xs="6" sm="4" md="3">
+                <MudButton Variant="Variant.Filled"
+                           Href="@($"/RadicalCharacters/{radical.Id}")"
+                           Style="width: 100%;">
+                    @radical.RadicalCharacter (@radical.Meaning)
+                </MudButton>
+            </MudItem>
+        }
+    </MudGrid>
+}
+@code {
+	private List<Radical> radicals;
+
+    protected override async Task OnInitializedAsync()
+    {
+        radicals = await Db.Radicals.ToListAsync();
+	}
+}
