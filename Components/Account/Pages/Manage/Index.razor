@@ -1,78 +1,197 @@
 ﻿@page "/Account/Manage"
+@rendermode InteractiveServer
+@attribute [Authorize]
 
 @using System.ComponentModel.DataAnnotations
-@using EasyLearn.Data
 @using EasyLearn.Data.Models
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
-
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
-@inject IdentityUserAccessor UserAccessor
-@inject IdentityRedirectManager RedirectManager
+@inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Min profil</PageTitle>
+<h3>Min profil</h3>
 
-<h3>Min Profil</h3>
-<StatusMessage />
+@if (!string.IsNullOrEmpty(StatusMessage))
+{
+    <div class="alert alert-info">@StatusMessage</div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
 
-<div class="row">
-    <div class="col-md-6">
-        <EditForm Model="Input" FormName="Profil" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Användarnamn</label>
-            </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label for="phone-number" class="form-label">Telefonnummer</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </EditForm>
-    </div>
-</div>
+@if (IsLoaded)
+{
+    <EditForm Model="FormModel" OnValidSubmit="OnValidSubmitAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" value="@user.UserName" disabled />
+            <label for="username">Användarnamn</label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <InputText class="form-control" @bind-Value="FormModel.FirstName" placeholder="Förnamn" />
+            <label for="firstName">Förnamn</label>
+            <ValidationMessage For="() => FormModel.FirstName" />
+        </div>
+
+        <div class="form-floating mb-3">
+            <InputText class="form-control" @bind-Value="FormModel.LastName" placeholder="Efternamn" />
+            <label for="lastName">Efternamn</label>
+            <ValidationMessage For="() => FormModel.FirstName" />
+        </div>
+
+
+        <div class="form-floating mb-3">
+            <InputText class="form-control" @bind-Value="FormModel.PhoneNumber" placeholder="Telefonnummer" />
+            <label for="phoneNumber">Telefonnummer</label>
+            <ValidationMessage For="() => FormModel.PhoneNumber" />
+        </div>
+
+        <button type="submit" class="btn-save">Spara ändringar</button>
+    </EditForm>
+}
+else
+{
+    <p>Laddar användarinformation...</p>
+}
 
 @code {
-    private ApplicationUser user = default!;
-    private string? username;
-    private string? phoneNumber;
+    private ApplicationUser user = new();
+    private string? StatusMessage;
+    private string? ErrorMessage;
+    private bool IsLoaded = false;
 
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    private UserProfileForm FormModel = new();
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
 
+	// Initierar komponenten och hämtar användarens profilinformation.
     protected override async Task OnInitializedAsync()
     {
-        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-        username = await UserManager.GetUserNameAsync(user);
-        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+        try
+        {
+            var principal = HttpContextAccessor.HttpContext?.User;
 
-        Input.PhoneNumber ??= phoneNumber;
+            if (principal == null || !(principal.Identity?.IsAuthenticated ?? false))
+            {
+                ErrorMessage = "Du är inte inloggad.";
+                return;
+            }
+
+            user = await UserManager.GetUserAsync(principal);
+
+            if (user == null)
+            {
+                ErrorMessage = "Användaren kunde inte hittas.";
+                return;
+            }
+
+            FormModel = new UserProfileForm
+            {
+                FirstName = user.FirstName,
+				LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber
+            };
+
+            IsLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ FEL I OnInitializedAsync: {ex}");
+            ErrorMessage = "Ett fel inträffade vid inläsning av användarprofilen.";
+        }
     }
 
+	// Hanterar formulärets giltiga inlämning och kollar om några ändringar har gjorts.
     private async Task OnValidSubmitAsync()
     {
-        if (Input.PhoneNumber != phoneNumber)
+        try
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-            if (!setPhoneResult.Succeeded)
+            bool hasChanged = false;
+
+            // Kollar om förnamnet är ändrat
+            if (FormModel.FirstName != user.FirstName)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                user.FirstName = FormModel.FirstName ?? "";
+                hasChanged = true;
+            }
+
+			// Kollar om efternamnet är ändrat
+            if (FormModel.LastName != user.LastName)
+            {
+                user.LastName = FormModel.LastName ?? "";
+                hasChanged = true;
+            }
+
+			// Kollar om telefonnumret är ändrat
+            if (FormModel.PhoneNumber != user.PhoneNumber)
+            {
+                var phoneResult = await UserManager.SetPhoneNumberAsync(user, FormModel.PhoneNumber ?? "");
+                if (!phoneResult.Succeeded)
+                {
+                    ErrorMessage = "Kunde inte uppdatera telefonnummer.";
+                    return;
+                }
+                hasChanged = true;
+            }
+
+			// Om något har ändrats, uppdatera användaren och visa meddelandet att den har uppdaterats
+            if (hasChanged)
+            {
+                var result = await UserManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    StatusMessage = "Din profil har uppdaterats!";
+                }
+                else
+                {
+                    ErrorMessage = "Ett fel uppstod vid uppdatering.";
+                }
+            }
+            else
+            {
+                StatusMessage = "Inga ändringar gjordes.";
             }
         }
-
-        await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FEL I OnValidSubmitAsync: {ex}");
+            ErrorMessage = "Ett oväntat fel inträffade vid uppdatering.";
+        }
     }
 
-    private sealed class InputModel
+    public class UserProfileForm
     {
-        [Phone]
-        [Display(Name = "Phone number")]
+        [Required(ErrorMessage = "Förnamn krävs.")]
+        public string? FirstName { get; set; }
+
+		[Required(ErrorMessage = "Efternamn krävs.")]
+		public string? LastName { get; set; }
+
+        [Phone(ErrorMessage = "Ogiltigt telefonnummer.")]
         public string? PhoneNumber { get; set; }
     }
 }
+
+<style>
+    button.btn-save {
+        background-color: #FF8F00;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem; /* Mindre höjd */
+        font-size: 1rem; /* Mindre text */
+        font-size: 1.1rem;
+        width: auto; /* Inte fullbredd */
+
+        border-radius: 4px;
+    }
+
+        button.btn-save:hover {
+            background-color: #e07c00;
+        }
+
+
+</style>
