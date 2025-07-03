@@ -1,12 +1,167 @@
 ﻿@page "/Account/Register"
 
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using EasyLearn.Data.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+<div class="register-wrap">
+    <div class="form-box-register">
+        <section>
+            <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
+                <DataAnnotationsValidator />
+                @*                 <ValidationSummary class="text-danger" role="alert" />
+ *@
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.FirstName" class="form-control" placeholder="Förnamn" />
+                    <label>Förnamn</label>
+                    <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.LastName" class="form-control" placeholder="Efternamn" />
+                    <label>Efternamn</label>
+                    <ValidationMessage For="() => Input.LastName" class="text-danger" />
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" placeholder="E-post" />
+                    <label>E-post</label>
+                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputDate @bind-Value="Input.DateOfBirth" class="form-control" />
+                    <label>Födelsedatum</label>
+                    <ValidationMessage For="() => Input.DateOfBirth" class="text-danger" />
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Password" type="password" class="form-control" placeholder="Lösenord" />
+                    <label>Lösenord</label>
+                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Password2" type="password" class="form-control" placeholder="Bekräfta lösenord" />
+                    <label>Bekräfta lösenord</label>
+                    <ValidationMessage For="() => Input.Password2" class="text-danger" />
+                </div>
+
+                <button type="submit" class="btn-register">Registrera</button>
+            </EditForm>
+        </section>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private RegisterInputModel Input { get; set; } = new();
+
+    private async Task RegisterUser()
+    {
+        var user = new ApplicationUser
+        {
+            UserName = Input.Email,
+            Email = Input.Email,
+            FirstName = Input.FirstName,
+            LastName = Input.LastName,
+            DateOfBirth = Input.DateOfBirth
+        };
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+
+        if (result.Succeeded)
+        {
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine(error.Description);
+            }
+        }
+    }
+
+    private sealed class RegisterInputModel
+    {
+        [Required(ErrorMessage = "Förnamn krävs")]
+        [RegularExpression("^[a-zA-ZåäöÅÄÖ]+$", ErrorMessage = "Endast bokstäver tillåtna.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Efternamn krävs")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress(ErrorMessage = "Ogiltig e-postadress")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Lösenord krävs")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Minst 8 tecken krävs")]
+        public string Password { get; set; } = string.Empty;
+
+        [Compare(nameof(Password), ErrorMessage = "Lösenorden matchar inte")]
+        public string Password2 { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Födelsedatum krävs")]
+        public DateTime? DateOfBirth { get; set; }
+    }
+}
+
+<style>
+    .register-wrap {
+        margin-bottom: 1rem;
+    }
+
+    .form-box-register {
+        max-width: 500px;
+        margin: auto;
+        padding: 1rem;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    button.btn-register {
+        background-color: #FF8F00;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.25rem;
+        font-size: 1.1rem;
+        border-radius: 4px;
+        width: 100%;
+    }
+
+        button.btn-register:hover {
+            background-color: #e07c00;
+        }
+
+</style>
+
+@* 
+        #FF8F00 gul färg för knappar
+        #050301 mörk färg för text
+        #fdf6e3 beige förg för bakgrund *@
+
+@* @page "/Account/Register"
+
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
 @using EasyLearn.Data
 @using EasyLearn.Data.Models
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using MudBlazor
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -18,129 +173,66 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
+<h1>Registrera dig här</h1>
 
-<div class="row">
-    <div class="col-md-4">
-        <StatusMessage Message="@Message" />
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
-            <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="confirm-password">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
-</div>
+// FirstName, LastName, Email, Password, DateOfBirth
+<MudGrid>
+    <MudItem xs="12" sm="7">
+        <MudPaper Class="pa-4">
+            <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
+                <MudTextField T="string" Label="Förnamn" Required="true" RequiredError="Förnamn är obligatoriskt" />
+                <MudTextField T="string" Label="Efternamn" Required="true" RequiredError="Efternman är obligatoriskt" />
+                <MudTextField T="string" Label="E-postadress" Required="true" RequiredError="E-postadress är obligatoriskt"
+                              Validation="@(new EmailAddressAttribute() {ErrorMessage = "The email address is invalid"})" />
+                <MudTextField T="string" Label="Lösenord" HelperText="Välj ett starkt lösenord" @ref="pwField1"
+                              InputType="InputType.Password"
+                              Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
+                              RequiredError="Lösenord är obligatoriskt" />
+                <MudTextField T="string"
+                              Label="Upprepa Lösenord" HelperText="Upprepa lösenordet" InputType="InputType.Password"
+                              Validation="@(new Func<string, string>(PasswordMatch))" />
+                
+                <div class="d-flex align-center justify-space-between">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" Class="ml-auto">Register</MudButton>
+                </div>
+            </MudForm>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
 @code {
-    private IEnumerable<IdentityError>? identityErrors;
+    bool success;
+    string[] errors = { };
+    MudTextField<string> pwField1;
+    MudForm form;
+    private string firstName;
+    private string lastName;
+    private string email;
+    private string password;
+    private string confirmPassword;
+    private DateTime? dateOfBirth;
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
-
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
-
-    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
-
-    public async Task RegisterUser(EditContext editContext)
+    private IEnumerable<string> PasswordStrength(string pw)
     {
-        var user = CreateUser();
-
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        var emailStore = GetEmailStore();
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-        var result = await UserManager.CreateAsync(user, Input.Password);
-
-        if (!result.Succeeded)
+        if (string.IsNullOrWhiteSpace(pw))
         {
-            identityErrors = result.Errors;
-            return;
+            yield return "Password is required!";
+            yield break;
         }
-
-        Logger.LogInformation("User created a new account with password.");
-
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
-
-        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-        if (UserManager.Options.SignIn.RequireConfirmedAccount)
-        {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
-        }
-
-        await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo(ReturnUrl);
+        if (pw.Length < 8)
+            yield return "Password must be at least of length 8";
+        if (!Regex.IsMatch(pw, @"[A-Z]"))
+            yield return "Password must contain at least one capital letter";
+        if (!Regex.IsMatch(pw, @"[a-z]"))
+            yield return "Password must contain at least one lowercase letter";
+        if (!Regex.IsMatch(pw, @"[0-9]"))
+            yield return "Password must contain at least one digit";
     }
 
-    private ApplicationUser CreateUser()
+    private string PasswordMatch(string arg)
     {
-        try
-        {
-            return Activator.CreateInstance<ApplicationUser>();
-        }
-        catch
-        {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor.");
-        }
+        if (pwField1.Value != arg)
+            return "Passwords don't match";
+        return null;
     }
-
-    private IUserEmailStore<ApplicationUser> GetEmailStore()
-    {
-        if (!UserManager.SupportsUserEmail)
-        {
-            throw new NotSupportedException("The default UI requires a user store with email support.");
-        }
-        return (IUserEmailStore<ApplicationUser>)UserStore;
-    }
-
-    private sealed class InputModel
-    {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; } = "";
-
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Password)]
-        [Display(Name = "Password")]
-        public string Password { get; set; } = "";
-
-        [DataType(DataType.Password)]
-        [Display(Name = "Confirm password")]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-        public string ConfirmPassword { get; set; } = "";
-    }
-}
+} *@
