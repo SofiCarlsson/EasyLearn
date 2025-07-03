@@ -54,15 +54,19 @@
 					Min Sida
                 </MudNavLink>
 
-                <div class="nav-item px-3">
+@*                 Ändra till samma style. *@ 
+               <div class="nav-item px-3">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                        <button type="submit" class="nav-link d-flex align-items-center"
+                                style="background: none; border: none; color: #050301; width: 100%; height: 3rem; text-align: left; padding-left: 0;">
+                            <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2" />
+                            Logout
                         </button>
                     </form>
                 </div>
+
             </Authorized>
 
             @* Om man inte är inloggad ser man dessa också *@

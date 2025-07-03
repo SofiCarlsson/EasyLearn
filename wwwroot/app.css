@@ -53,3 +53,23 @@ h1:focus {
 .beige-paper {
     background-color: #fdf6e3 !important;
 }
+
+/* Gör alla MudBlazor-ikoner svarta i navmenyn */
+.mud-icon-root {
+    color: #050301 !important;
+}
+/* Grundfärg för alla länkar i MudNavMenu */
+.mud-nav-link {
+    color: #050301 !important;  /* Svart text */
+}
+
+/* Färg när man hovrar */
+    .mud-nav-link:hover {
+        color: #292004 !important; /* Din annan hoverfärg */
+    }
+
+/* Färg när länken är aktiv (vald) */
+    .mud-nav-link.mud-nav-link-active {
+        color: #FF8F00 !important; /* Svart även när den är vald */
+    }
+
